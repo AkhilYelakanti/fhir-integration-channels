@@ -143,7 +143,7 @@
         </destinationConnectorProperties>
         <script>	
 	var messageData=connectorMessage.getRawData();
-	var serverbase=&quot;http://192.168.225.194:2019&quot;;
+	var serverbase=&quot;https://v2-fhir-converter.collabkare.com&quot;;
 //	var adsLength = messageData.length;
 //	var base64Bytes = [];
 //	for(i = 0; i &lt; adsLength;i++){
