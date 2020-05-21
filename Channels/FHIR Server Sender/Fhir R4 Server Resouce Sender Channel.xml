@@ -1,0 +1,273 @@
+<channel version="3.9.0">
+  <id>e63635e4-93f7-4111-b732-acf27546e26b</id>
+  <nextMetaDataId>2</nextMetaDataId>
+  <name>Fhir R4 Server Resouce Sender Channel</name>
+  <description></description>
+  <revision>2</revision>
+  <sourceConnector version="3.9.0">
+    <metaDataId>0</metaDataId>
+    <name>sourceConnector</name>
+    <properties class="com.mirth.connect.connectors.vm.VmReceiverProperties" version="3.9.0">
+      <pluginProperties/>
+      <sourceConnectorProperties version="3.9.0">
+        <responseVariable>None</responseVariable>
+        <respondAfterProcessing>true</respondAfterProcessing>
+        <processBatch>false</processBatch>
+        <firstResponse>false</firstResponse>
+        <processingThreads>1</processingThreads>
+        <resourceIds class="linked-hash-map">
+          <entry>
+            <string>Default Resource</string>
+            <string>[Default Resource]</string>
+          </entry>
+        </resourceIds>
+        <queueBufferSize>1000</queueBufferSize>
+      </sourceConnectorProperties>
+    </properties>
+    <transformer version="3.9.0">
+      <elements/>
+      <inboundDataType>FHIR</inboundDataType>
+      <outboundDataType>FHIR</outboundDataType>
+      <inboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+        <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+          <serializationType>JSON</serializationType>
+          <fhirVersion>R4</fhirVersion>
+        </serializationProperties>
+        <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+          <serializationType>JSON</serializationType>
+        </deserializationProperties>
+        <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+          <splitType>JavaScript</splitType>
+          <batchScript></batchScript>
+        </batchProperties>
+      </inboundProperties>
+      <outboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+        <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+          <serializationType>JSON</serializationType>
+          <fhirVersion>R4</fhirVersion>
+        </serializationProperties>
+        <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+          <serializationType>JSON</serializationType>
+        </deserializationProperties>
+        <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+          <splitType>JavaScript</splitType>
+          <batchScript></batchScript>
+        </batchProperties>
+      </outboundProperties>
+    </transformer>
+    <filter version="3.9.0">
+      <elements/>
+    </filter>
+    <transportName>Channel Reader</transportName>
+    <mode>SOURCE</mode>
+    <enabled>true</enabled>
+    <waitForPrevious>true</waitForPrevious>
+  </sourceConnector>
+  <destinationConnectors>
+    <connector version="3.9.0">
+      <metaDataId>1</metaDataId>
+      <name>Fhir post  operation</name>
+      <properties class="com.mirth.connect.connectors.js.JavaScriptDispatcherProperties" version="3.9.0">
+        <pluginProperties/>
+        <destinationConnectorProperties version="3.9.0">
+          <queueEnabled>false</queueEnabled>
+          <sendFirst>false</sendFirst>
+          <retryIntervalMillis>10000</retryIntervalMillis>
+          <regenerateTemplate>false</regenerateTemplate>
+          <retryCount>0</retryCount>
+          <rotate>false</rotate>
+          <includeFilterTransformer>false</includeFilterTransformer>
+          <threadCount>1</threadCount>
+          <threadAssignmentVariable></threadAssignmentVariable>
+          <validateResponse>false</validateResponse>
+          <resourceIds class="linked-hash-map">
+            <entry>
+              <string>Default Resource</string>
+              <string>[Default Resource]</string>
+            </entry>
+          </resourceIds>
+          <queueBufferSize>1000</queueBufferSize>
+          <reattachAttachments>true</reattachAttachments>
+        </destinationConnectorProperties>
+        <script>
+	var resource=$(&apos;mirth_type&apos;);
+	//var baseurl= $(&apos;fhir_base_url&apos;);
+	var baseurl = sourceMap.get(&apos;fhir_base_url&apos;);
+	var token = &quot;Bearer &quot;+ sourceMap.get(&apos;token&apos;);
+	var url = new java.net.URL(baseurl+&quot;/&quot;+resource);
+    // Open connection to url
+     var conn = url.openConnection();
+
+    // Send request  
+     logger.info(&quot;Authorization : &quot;+token);
+     conn.setRequestProperty(&quot;Authorization&quot;, token);   
+     conn.setRequestMethod(&quot;POST&quot;);
+     conn.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);
+     conn.setRequestProperty(&quot;Content-Language&quot;, &quot;en-US&quot;);
+     conn.setUseCaches(false);
+     conn.setDoInput(true);
+     conn.setDoOutput(true);
+    
+
+    
+     var outStream = conn.getOutputStream();
+     var outWriter = new java.io.OutputStreamWriter(outStream);
+     //create entity
+     outWriter.write(connectorMessage.getEncodedData());
+     outWriter.close();
+
+     //Capture Response
+     logger.info(conn.getResponseCode());
+     var respCode = conn.getResponseCode();
+     var inputStream = conn.getInputStream();
+     var streamReader = new java.io.InputStreamReader(inputStream);
+     var respStream = new java.io.BufferedReader(streamReader);
+     var buffer = &apos;&apos;;
+     var line = null;
+     while ((line = respStream.readLine()) != null) {
+         buffer = buffer + line;
+     }
+     respStream.close();
+     logger.info(buffer);
+    //do something with results
+     var json = JSON.parse(buffer);
+     return buffer;  
+   </script>
+      </properties>
+      <transformer version="3.9.0">
+        <elements/>
+        <inboundDataType>FHIR</inboundDataType>
+        <outboundDataType>FHIR</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+            <fhirVersion>R4</fhirVersion>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+            <splitType>JavaScript</splitType>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+            <fhirVersion>R4</fhirVersion>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+            <splitType>JavaScript</splitType>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </transformer>
+      <responseTransformer version="3.9.0">
+        <elements/>
+        <inboundDataType>FHIR</inboundDataType>
+        <outboundDataType>FHIR</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+            <fhirVersion>R4</fhirVersion>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+            <splitType>JavaScript</splitType>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirSerializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+            <fhirVersion>R4</fhirVersion>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirDeserializationProperties" version="3.9.0">
+            <serializationType>JSON</serializationType>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.fhir.shared.FhirBatchProperties" version="3.9.0">
+            <splitType>JavaScript</splitType>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </responseTransformer>
+      <filter version="3.9.0">
+        <elements/>
+      </filter>
+      <transportName>JavaScript Writer</transportName>
+      <mode>DESTINATION</mode>
+      <enabled>true</enabled>
+      <waitForPrevious>true</waitForPrevious>
+    </connector>
+  </destinationConnectors>
+  <preprocessingScript>// Modify the message variable below to pre process data
+return message;</preprocessingScript>
+  <postprocessingScript>// This script executes once after a message has been processed
+// Responses returned from here will be stored as &quot;Postprocessor&quot; in the response map
+return;</postprocessingScript>
+  <deployScript>// This script executes once when the channel is deployed
+// You only have access to the globalMap and globalChannelMap here to persist data
+return;</deployScript>
+  <undeployScript>// This script executes once when the channel is undeployed
+// You only have access to the globalMap and globalChannelMap here to persist data
+return;</undeployScript>
+  <properties version="3.9.0">
+    <clearGlobalChannelMap>true</clearGlobalChannelMap>
+    <messageStorageMode>DEVELOPMENT</messageStorageMode>
+    <encryptData>false</encryptData>
+    <removeContentOnCompletion>false</removeContentOnCompletion>
+    <removeOnlyFilteredOnCompletion>false</removeOnlyFilteredOnCompletion>
+    <removeAttachmentsOnCompletion>false</removeAttachmentsOnCompletion>
+    <initialState>STARTED</initialState>
+    <storeAttachments>true</storeAttachments>
+    <metaDataColumns>
+      <metaDataColumn>
+        <name>SOURCE</name>
+        <type>STRING</type>
+        <mappingName>mirth_source</mappingName>
+      </metaDataColumn>
+      <metaDataColumn>
+        <name>TYPE</name>
+        <type>STRING</type>
+        <mappingName>mirth_type</mappingName>
+      </metaDataColumn>
+      <metaDataColumn>
+        <name>FHIR_BASE_URL</name>
+        <type>STRING</type>
+        <mappingName>fhir_base_url</mappingName>
+      </metaDataColumn>
+      <metaDataColumn>
+        <name>TOKEN</name>
+        <type>STRING</type>
+        <mappingName>token</mappingName>
+      </metaDataColumn>
+    </metaDataColumns>
+    <attachmentProperties version="3.9.0">
+      <type>None</type>
+      <properties/>
+    </attachmentProperties>
+    <resourceIds class="linked-hash-map">
+      <entry>
+        <string>Default Resource</string>
+        <string>[Default Resource]</string>
+      </entry>
+    </resourceIds>
+  </properties>
+  <exportData>
+    <metadata>
+      <enabled>true</enabled>
+      <lastModified>
+        <time>1590050008001</time>
+        <timezone>Asia/Calcutta</timezone>
+      </lastModified>
+      <pruningSettings>
+        <archiveEnabled>true</archiveEnabled>
+      </pruningSettings>
+    </metadata>
+  </exportData>
+</channel>
