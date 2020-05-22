@@ -3,7 +3,7 @@
   <nextMetaDataId>2</nextMetaDataId>
   <name>Fhir R4 Server Resouce Sender Channel</name>
   <description></description>
-  <revision>2</revision>
+  <revision>7</revision>
   <sourceConnector version="3.9.0">
     <metaDataId>0</metaDataId>
     <name>sourceConnector</name>
@@ -90,11 +90,28 @@
           <reattachAttachments>true</reattachAttachments>
         </destinationConnectorProperties>
         <script>
-	var resource=$(&apos;mirth_type&apos;);
+	var resourceType=$(&apos;mirth_type&apos;);
 	//var baseurl= $(&apos;fhir_base_url&apos;);
 	var baseurl = sourceMap.get(&apos;fhir_base_url&apos;);
 	var token = &quot;Bearer &quot;+ sourceMap.get(&apos;token&apos;);
-	var url = new java.net.URL(baseurl+&quot;/&quot;+resource);
+	
+	var urlString=&apos;&apos;;
+	var resource=JSON.parse(connectorMessage.getEncodedData());
+	if(resourceType==&apos;Bundle&apos;){
+		var type=resource.type;
+
+		logger.info(&quot;type : &quot;+type);
+		if(type==&apos;transaction&apos;){
+			urlString=baseurl;
+		}else{
+			urlString=baseurl+&quot;/&quot;+resourceType;
+		}
+		
+	}else{
+		urlString=baseurl+&quot;/&quot;+resourceType;
+	}
+	
+	var url = new java.net.URL(urlString);
     // Open connection to url
      var conn = url.openConnection();
 
@@ -262,7 +279,7 @@ return;</undeployScript>
     <metadata>
       <enabled>true</enabled>
       <lastModified>
-        <time>1590050008001</time>
+        <time>1590130151458</time>
         <timezone>Asia/Calcutta</timezone>
       </lastModified>
       <pruningSettings>
