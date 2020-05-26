@@ -3,12 +3,39 @@
   <nextMetaDataId>3</nextMetaDataId>
   <name>Hl7 v2x to Fhir Trasformation</name>
   <description></description>
-  <revision>30</revision>
+  <revision>49</revision>
   <sourceConnector version="3.9.0">
     <metaDataId>0</metaDataId>
     <name>sourceConnector</name>
-    <properties class="com.mirth.connect.connectors.vm.VmReceiverProperties" version="3.9.0">
+    <properties class="com.mirth.connect.connectors.file.FileReceiverProperties" version="3.9.0">
       <pluginProperties/>
+      <pollConnectorProperties version="3.9.0">
+        <pollingType>INTERVAL</pollingType>
+        <pollOnStart>false</pollOnStart>
+        <pollingFrequency>5000</pollingFrequency>
+        <pollingHour>0</pollingHour>
+        <pollingMinute>0</pollingMinute>
+        <cronJobs/>
+        <pollConnectorPropertiesAdvanced>
+          <weekly>true</weekly>
+          <inactiveDays>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+          </inactiveDays>
+          <dayOfMonth>1</dayOfMonth>
+          <allDay>true</allDay>
+          <startingHour>8</startingHour>
+          <startingMinute>0</startingMinute>
+          <endingHour>17</endingHour>
+          <endingMinute>0</endingMinute>
+        </pollConnectorPropertiesAdvanced>
+      </pollConnectorProperties>
       <sourceConnectorProperties version="3.9.0">
         <responseVariable>None</responseVariable>
         <respondAfterProcessing>true</respondAfterProcessing>
@@ -23,6 +50,34 @@
         </resourceIds>
         <queueBufferSize>1000</queueBufferSize>
       </sourceConnectorProperties>
+      <scheme>FILE</scheme>
+      <host>D:/,mirth/</host>
+      <fileFilter>*.hl7</fileFilter>
+      <regex>false</regex>
+      <directoryRecursion>false</directoryRecursion>
+      <ignoreDot>true</ignoreDot>
+      <anonymous>true</anonymous>
+      <username>anonymous</username>
+      <password>anonymous</password>
+      <timeout>10000</timeout>
+      <secure>true</secure>
+      <passive>true</passive>
+      <validateConnection>true</validateConnection>
+      <afterProcessingAction>MOVE</afterProcessingAction>
+      <moveToDirectory>processed</moveToDirectory>
+      <moveToFileName>${originalFilename}</moveToFileName>
+      <errorReadingAction>NONE</errorReadingAction>
+      <errorResponseAction>MOVE</errorResponseAction>
+      <errorMoveToDirectory>errored</errorMoveToDirectory>
+      <errorMoveToFileName>${originalFilename}</errorMoveToFileName>
+      <checkFileAge>true</checkFileAge>
+      <fileAge>1000</fileAge>
+      <fileSizeMinimum>0</fileSizeMinimum>
+      <fileSizeMaximum></fileSizeMaximum>
+      <ignoreFileSizeMaximum>true</ignoreFileSizeMaximum>
+      <sortBy>date</sortBy>
+      <binary>true</binary>
+      <charsetEncoding>DEFAULT_ENCODING</charsetEncoding>
     </properties>
     <transformer version="3.9.0">
       <elements/>
@@ -110,7 +165,7 @@
     <filter version="3.9.0">
       <elements/>
     </filter>
-    <transportName>Channel Reader</transportName>
+    <transportName>File Reader</transportName>
     <mode>SOURCE</mode>
     <enabled>true</enabled>
     <waitForPrevious>true</waitForPrevious>
@@ -142,70 +197,28 @@
           <reattachAttachments>true</reattachAttachments>
         </destinationConnectorProperties>
         <script>	
-	var messageData=connectorMessage.getRawData();
+	var messageData=new java.lang.String(FileUtil.decode(connectorMessage.getEncodedData()));
 	var serverbase=&quot;https://v2-fhir-converter.collabkare.com&quot;;
-//	var adsLength = messageData.length;
-//	var base64Bytes = [];
-//	for(i = 0; i &lt; adsLength;i++){
-//	    base64Bytes.push(messageData.charCodeAt(i));
-//	}
-//	var encodedData = FileUtil.encode(base64Bytes);
-	var encodedData =FileUtil.encode(new java.lang.String(messageData).getBytes(&apos;UTF-8&apos;));
-	encodedData=encodedData.split(&quot;\r\n&quot;).join(&quot;&quot;);
-	logger.info(&quot;HL7 message encoded data &quot;+encodedData);
+
 	var template_id=$(&apos;template_id&apos;)+&quot;.hbs&quot;;
-	//var baseurl= $(&apos;fhir_base_url&apos;);
-	var baseurl = sourceMap.get(&apos;fhir_base_url&apos;);
-	var token = &quot;Bearer &quot;+ sourceMap.get(&apos;token&apos;);
-	var url = new java.net.URL(serverbase+&quot;/api/templates/&quot;+template_id);
-    // Open connection to url
-     var conn = url.openConnection();
 
-    // Send request   
-     conn.setRequestMethod(&quot;GET&quot;);
-     conn.setRequestProperty(&quot;Content-Language&quot;, &quot;en-US&quot;);
-     conn.setDoOutput(true);
-
-
-     //Capture Response
-     logger.info(conn.getResponseCode());
-     var respCode = conn.getResponseCode();
-     var inputStream = conn.getInputStream();
-     var streamReader = new java.io.InputStreamReader(inputStream);
-     var respStream = new java.io.BufferedReader(streamReader);
-     var buffer = &apos;&apos;;
-     var line = null;
-     while ((line = respStream.readLine()) != null) {
-         buffer = buffer + line;
-     }
-     respStream.close();
-     
- 	//do something with results
- 	
- 	var templateEncodedData =FileUtil.encode(new java.lang.String(buffer).getBytes(&apos;UTF-8&apos;));
- 	templateEncodedData=templateEncodedData.split(&quot;\r\n&quot;).join(&quot;&quot;);
- 	
+	   logger.info(&quot;HL7 message : &quot;+messageData);
  	// open new url connection to convert 
 
- 	var convertUrl = new java.net.URL(serverbase+&quot;/api/convert/hl7&quot;);
+ 	var convertUrl = new java.net.URL(serverbase+&quot;/api/convert/hl7/&quot;+template_id);
  	 var newconn = convertUrl.openConnection();
  	  // Send request   
      newconn.setRequestMethod(&quot;POST&quot;);
-     newconn.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;);
+     newconn.setRequestProperty(&quot;Content-Type&quot;, &quot;text/plain&quot;);
      newconn.setRequestProperty(&quot;Content-Language&quot;, &quot;en-US&quot;);
      newconn.setUseCaches(false);
      newconn.setDoInput(true);
      newconn.setDoOutput(true);
 
-     var reqBody=&quot;{\&quot;templateBase64\&quot;:\&quot;&quot;+templateEncodedData+&quot;\&quot;,\&quot;messageBase64\&quot;:\&quot;&quot;+encodedData+&quot;\&quot;} &quot;;
-	
-      
-//      reqBody.add(&quot;templateBase64&quot;,templateEncodedData);
-//      reqBody.add(&quot;messageBase64&quot;,encodedData);
      var convertOutStream = newconn.getOutputStream();
      var convOutWriter = new java.io.OutputStreamWriter(convertOutStream);
      //create entity
-     convOutWriter.write(reqBody.toString());
+     convOutWriter.write(messageData);
      convOutWriter.close();
 
      //Capture Response
@@ -228,7 +241,7 @@
       <transformer version="3.9.0">
         <elements/>
         <inboundDataType>HL7V2</inboundDataType>
-        <outboundDataType>JSON</outboundDataType>
+        <outboundDataType>HL7V2</outboundDataType>
         <inboundProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DataTypeProperties" version="3.9.0">
           <serializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2SerializationProperties" version="3.9.0">
             <handleRepetitions>true</handleRepetitions>
@@ -268,28 +281,127 @@
             <originalIdMapVariable></originalIdMapVariable>
           </responseValidationProperties>
         </inboundProperties>
-        <outboundProperties class="com.mirth.connect.plugins.datatypes.json.JSONDataTypeProperties" version="3.9.0">
-          <batchProperties class="com.mirth.connect.plugins.datatypes.json.JSONBatchProperties" version="3.9.0">
-            <splitType>JavaScript</splitType>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2SerializationProperties" version="3.9.0">
+            <handleRepetitions>true</handleRepetitions>
+            <handleSubcomponents>true</handleSubcomponents>
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <stripNamespaces>true</stripNamespaces>
+            <segmentDelimiter>\r</segmentDelimiter>
+            <convertLineBreaks>true</convertLineBreaks>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DeserializationProperties" version="3.9.0">
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <segmentDelimiter>\r</segmentDelimiter>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2BatchProperties" version="3.9.0">
+            <splitType>MSH_Segment</splitType>
             <batchScript></batchScript>
           </batchProperties>
+          <responseGenerationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseGenerationProperties" version="3.9.0">
+            <segmentDelimiter>\r</segmentDelimiter>
+            <successfulACKCode>AA</successfulACKCode>
+            <successfulACKMessage></successfulACKMessage>
+            <errorACKCode>AE</errorACKCode>
+            <errorACKMessage>An Error Occurred Processing Message.</errorACKMessage>
+            <rejectedACKCode>AR</rejectedACKCode>
+            <rejectedACKMessage>Message Rejected.</rejectedACKMessage>
+            <msh15ACKAccept>false</msh15ACKAccept>
+            <dateFormat>yyyyMMddHHmmss.SSS</dateFormat>
+          </responseGenerationProperties>
+          <responseValidationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseValidationProperties" version="3.9.0">
+            <successfulACKCode>AA,CA</successfulACKCode>
+            <errorACKCode>AE,CE</errorACKCode>
+            <rejectedACKCode>AR,CR</rejectedACKCode>
+            <validateMessageControlId>true</validateMessageControlId>
+            <originalMessageControlId>Destination_Encoded</originalMessageControlId>
+            <originalIdMapVariable></originalIdMapVariable>
+          </responseValidationProperties>
         </outboundProperties>
       </transformer>
       <responseTransformer version="3.9.0">
         <elements/>
-        <inboundDataType>JSON</inboundDataType>
-        <outboundDataType>JSON</outboundDataType>
-        <inboundProperties class="com.mirth.connect.plugins.datatypes.json.JSONDataTypeProperties" version="3.9.0">
-          <batchProperties class="com.mirth.connect.plugins.datatypes.json.JSONBatchProperties" version="3.9.0">
-            <splitType>JavaScript</splitType>
+        <inboundDataType>HL7V2</inboundDataType>
+        <outboundDataType>HL7V2</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2SerializationProperties" version="3.9.0">
+            <handleRepetitions>true</handleRepetitions>
+            <handleSubcomponents>true</handleSubcomponents>
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <stripNamespaces>true</stripNamespaces>
+            <segmentDelimiter>\r</segmentDelimiter>
+            <convertLineBreaks>true</convertLineBreaks>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DeserializationProperties" version="3.9.0">
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <segmentDelimiter>\r</segmentDelimiter>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2BatchProperties" version="3.9.0">
+            <splitType>MSH_Segment</splitType>
             <batchScript></batchScript>
           </batchProperties>
+          <responseGenerationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseGenerationProperties" version="3.9.0">
+            <segmentDelimiter>\r</segmentDelimiter>
+            <successfulACKCode>AA</successfulACKCode>
+            <successfulACKMessage></successfulACKMessage>
+            <errorACKCode>AE</errorACKCode>
+            <errorACKMessage>An Error Occurred Processing Message.</errorACKMessage>
+            <rejectedACKCode>AR</rejectedACKCode>
+            <rejectedACKMessage>Message Rejected.</rejectedACKMessage>
+            <msh15ACKAccept>false</msh15ACKAccept>
+            <dateFormat>yyyyMMddHHmmss.SSS</dateFormat>
+          </responseGenerationProperties>
+          <responseValidationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseValidationProperties" version="3.9.0">
+            <successfulACKCode>AA,CA</successfulACKCode>
+            <errorACKCode>AE,CE</errorACKCode>
+            <rejectedACKCode>AR,CR</rejectedACKCode>
+            <validateMessageControlId>true</validateMessageControlId>
+            <originalMessageControlId>Destination_Encoded</originalMessageControlId>
+            <originalIdMapVariable></originalIdMapVariable>
+          </responseValidationProperties>
         </inboundProperties>
-        <outboundProperties class="com.mirth.connect.plugins.datatypes.json.JSONDataTypeProperties" version="3.9.0">
-          <batchProperties class="com.mirth.connect.plugins.datatypes.json.JSONBatchProperties" version="3.9.0">
-            <splitType>JavaScript</splitType>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DataTypeProperties" version="3.9.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2SerializationProperties" version="3.9.0">
+            <handleRepetitions>true</handleRepetitions>
+            <handleSubcomponents>true</handleSubcomponents>
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <stripNamespaces>true</stripNamespaces>
+            <segmentDelimiter>\r</segmentDelimiter>
+            <convertLineBreaks>true</convertLineBreaks>
+          </serializationProperties>
+          <deserializationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2DeserializationProperties" version="3.9.0">
+            <useStrictParser>false</useStrictParser>
+            <useStrictValidation>false</useStrictValidation>
+            <segmentDelimiter>\r</segmentDelimiter>
+          </deserializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2BatchProperties" version="3.9.0">
+            <splitType>MSH_Segment</splitType>
             <batchScript></batchScript>
           </batchProperties>
+          <responseGenerationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseGenerationProperties" version="3.9.0">
+            <segmentDelimiter>\r</segmentDelimiter>
+            <successfulACKCode>AA</successfulACKCode>
+            <successfulACKMessage></successfulACKMessage>
+            <errorACKCode>AE</errorACKCode>
+            <errorACKMessage>An Error Occurred Processing Message.</errorACKMessage>
+            <rejectedACKCode>AR</rejectedACKCode>
+            <rejectedACKMessage>Message Rejected.</rejectedACKMessage>
+            <msh15ACKAccept>false</msh15ACKAccept>
+            <dateFormat>yyyyMMddHHmmss.SSS</dateFormat>
+          </responseGenerationProperties>
+          <responseValidationProperties class="com.mirth.connect.plugins.datatypes.hl7v2.HL7v2ResponseValidationProperties" version="3.9.0">
+            <successfulACKCode>AA,CA</successfulACKCode>
+            <errorACKCode>AE,CE</errorACKCode>
+            <rejectedACKCode>AR,CR</rejectedACKCode>
+            <validateMessageControlId>true</validateMessageControlId>
+            <originalMessageControlId>Destination_Encoded</originalMessageControlId>
+            <originalIdMapVariable></originalIdMapVariable>
+          </responseValidationProperties>
         </outboundProperties>
       </responseTransformer>
       <filter version="3.9.0">
@@ -569,7 +681,7 @@ return;</undeployScript>
     <metadata>
       <enabled>true</enabled>
       <lastModified>
-        <time>1590067619765</time>
+        <time>1590482503290</time>
         <timezone>Asia/Calcutta</timezone>
       </lastModified>
       <pruningSettings>
