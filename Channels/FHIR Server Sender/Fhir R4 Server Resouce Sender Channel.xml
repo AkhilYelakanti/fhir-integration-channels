@@ -3,7 +3,7 @@
   <nextMetaDataId>2</nextMetaDataId>
   <name>Fhir R4 Server Resouce Sender Channel</name>
   <description></description>
-  <revision>7</revision>
+  <revision>8</revision>
   <sourceConnector version="3.9.0">
     <metaDataId>0</metaDataId>
     <name>sourceConnector</name>
@@ -93,7 +93,20 @@
 	var resourceType=$(&apos;mirth_type&apos;);
 	//var baseurl= $(&apos;fhir_base_url&apos;);
 	var baseurl = sourceMap.get(&apos;fhir_base_url&apos;);
-	var token = &quot;Bearer &quot;+ sourceMap.get(&apos;token&apos;);
+
+	if(baseurl==null){
+		baseurl=$(&apos;fhir_base_url&apos;);
+	}
+	var token=&apos;&apos;;
+	
+	if(sourceMap.get(&apos;token&apos;)==null){
+		token = &quot;Bearer &quot;+ $(&apos;token&apos;);
+	}else{
+		token = &quot;Bearer &quot;+ sourceMap.get(&apos;token&apos;);
+	}
+	
+
+	
 	
 	var urlString=&apos;&apos;;
 	var resource=JSON.parse(connectorMessage.getEncodedData());
@@ -279,7 +292,7 @@ return;</undeployScript>
     <metadata>
       <enabled>true</enabled>
       <lastModified>
-        <time>1590130151458</time>
+        <time>1590553968937</time>
         <timezone>Asia/Calcutta</timezone>
       </lastModified>
       <pruningSettings>
